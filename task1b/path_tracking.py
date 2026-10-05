@@ -50,67 +50,55 @@ WHEEL_OFFSET = 0.0275       # O: distance between kingpin axis and wheel centre.
 
 def ackermann_wheel_angles(delta):
     '''
-    Purpose:
-    ---
-    Convert one desired steering angle into the two real front-wheel angles
-    the vehicle's Ackermann geometry implies.
-
-    Input Arguments:
-    ---
-    `delta` :          [ float ]
-        Desired steering angle in radians, as if the vehicle had a single
-        centred front wheel. Positive means turning left.
-
-    Returns:
-    ---
-    `left_wheel_angle`  : [ float ]  angle for the left front wheel, radians
-    `right_wheel_angle` : [ float ]  angle for the right front wheel, radians
+    Convert virtual steering angle delta into left/right Ackermann wheel angles.
+    Positive delta means the vehicle turns left.
     '''
+    if abs(delta) < 1e-12:
+        return 0.0, 0.0
 
-    left_wheel_angle = 0
-    right_wheel_angle = 0
+    half_track = (TRACK_WIDTH / 2.0) - WHEEL_OFFSET
+    radius = WHEELBASE / math.tan(abs(delta))
+
+    inner_angle = math.atan(
+        WHEELBASE / (radius - half_track)
+    )
+    outer_angle = math.atan(
+        WHEELBASE / (radius + half_track)
+    )
+
+    if delta > 0.0:
+        left_wheel_angle = inner_angle
+        right_wheel_angle = outer_angle
+    else:
+        left_wheel_angle = -outer_angle
+        right_wheel_angle = -inner_angle
 
     return left_wheel_angle, right_wheel_angle
 
 
 def compute_steering(target_y, current_values):
-    '''
-    Purpose:
-    ---
-    Compute the steering angle that drives the vehicle to `target_y` and keeps
-    it there. Called once per simulation step.
+    """
+    Lane controller using lateral-position error and yaw damping.
 
-    Input Arguments:
-    ---
-    `target_y` :        [ float ]
-        Lateral position to converge to, in metres - see LANE_Y below.
+    Positive steering turns left, which moves the vehicle
+    toward smaller world-y values.
+    """
+    current_y = float(current_values["y"])
+    current_yaw = float(current_values["yaw"])
 
-    `current_values` :  [ dict ]
-        {
-            "y"     : float,  current lateral position of the vehicle, in metres
-            "yaw"   : float,  current heading in radians, 0.0 when aligned with the road
-            "speed" : float,  current forward speed, in m/s
-            "dt"    : float,  seconds elapsed since the previous call
-            "t"     : float,  seconds since this run started
-        }
+    error = current_y - float(target_y)
 
-    Returns:
-    ---
-    `steering` : [ float ]
-        Steering angle in radians. Positive turns the vehicle left, which on
-        this road means toward SMALLER y.
+    # Lateral-position gain
+    Kp = 2.1
 
-    NOTE:
-    ---
-    While you are debugging, printing or plotting from in here is fine - do
-    whatever helps you see what your controller is doing.
+    # Heading/yaw damping
+    Kyaw = 0.8
 
-    Before you submit, take all of it back out. The submitted function must
-    ONLY compute and return the steering angle: no print(), no plotting, and
-    no commanding the simulator - the control loop below does all of that.
-    '''
+    steering = Kp * error - Kyaw * current_yaw
 
-    steering = 0
+    max_steer = math.radians(30.0)
+    steering = max(-max_steer, min(max_steer, steering))
+
     return steering
 
 
