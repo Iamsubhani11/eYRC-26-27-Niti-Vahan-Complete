@@ -46,71 +46,165 @@ VALID_LANES = (LANE_LEFT, LANE_RIGHT, LANE_UNKNOWN)
 ############### ADD YOUR IMPLEMENTATION HERE #################
 ##############################################################
 
+_last_white_x = None
+_last_lane = LANE_UNKNOWN
+_gap_count = 0
+_last_center_x = None
+
 def detect_lane(frame):
-    '''
-    Purpose:
-    ---
-    Detect the lane in a single frame and report where the centre of the lane
-    is, and which of the two lanes the vehicle is currently in.
+    global _last_white_x, _last_lane, _gap_count, _last_center_x
 
-    Input Arguments:
-    ---
-    `frame` :   [ numpy.ndarray ]
-        A single BGR frame read from the video, of shape (height, width, 3).
+    if frame is None:
+        return {"center_x": -1, "lane": LANE_UNKNOWN}
 
-    Returns:
-    ---
-    `result` :  [ dict ]
-        {
-            "center_x" : int,   x-pixel of the lane centre in this frame,
-                                or -1 if the lane could not be found
-            "lane"     : str,   "left", "right" or "unknown"
-        }
+    h, w = frame.shape[:2]
+    if h < 100 or w < 100:
+        return {"center_x": -1, "lane": LANE_UNKNOWN}
 
-    Example call:
-    ---
-    result = detect_lane(frame)
+    vehicle_x = w / 2.0
+    y_eval = int(0.75 * h)
+    
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    
+    # Yellow mask
+    yellow_mask = cv2.inRange(
+        hsv,
+        np.array([15, 60, 60], dtype=np.uint8),
+        np.array([40, 255, 255], dtype=np.uint8)
+    )
+    
+    # White mask
+    white_mask = cv2.inRange(
+        hsv,
+        np.array([0, 0, 150], dtype=np.uint8),
+        np.array([180, 80, 255], dtype=np.uint8)
+    )
+    
+    y0 = int(0.35 * h)
+    y1 = int(0.95 * h)
+    yellow_mask[:y0] = 0; yellow_mask[y1:] = 0
+    white_mask[:y0] = 0; white_mask[y1:] = 0
+    
+    kernel = np.ones((3, 3), np.uint8)
+    yellow_mask = cv2.morphologyEx(yellow_mask, cv2.MORPH_CLOSE, kernel)
+    white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
+    
+    top_m = 50.0
+    num_w, labels_w, stats_w, centroids_w = cv2.connectedComponentsWithStats(white_mask, 8)
+    dash_pts = []
+    for i in range(1, num_w):
+        x, y, ww, hh, area = stats_w[i]
+        cx, cy = centroids_w[i]
+        t = max(0.0, min(1.0, (cy - y0) / float(y1 - y0)))
+        cur_min_x = (1.0 - t) * top_m
+        cur_max_x = w - cur_min_x
+        if 15 <= area <= 25000 and ww < int(0.7*w) and hh < int(0.7*h):
+            if cur_min_x <= cx <= cur_max_x:
+                dash_pts.append((float(cx), float(cy), area))
+            
+    # Yellow boundaries
+    num_y, labels_y, stats_y, centroids_y = cv2.connectedComponentsWithStats(yellow_mask, 8)
+    yellow_left_x = None
+    yellow_right_x = None
+    
+    for i in range(1, num_y):
+        x, y, ww, hh, area = stats_y[i]
+        if area > 30:
+            cx, cy = centroids_y[i]
+            sample_y = max(y0, min(y1 - 1, y_eval))
+            if y <= sample_y <= y + hh:
+                row_xs = np.where(labels_y[sample_y] == i)[0]
+                if len(row_xs) > 0:
+                    if cx < vehicle_x:
+                        yl = float(np.max(row_xs))
+                        if yellow_left_x is None or yl > yellow_left_x:
+                            yellow_left_x = yl
+                    else:
+                        yr = float(np.min(row_xs))
+                        if yellow_right_x is None or yr < yellow_right_x:
+                            yellow_right_x = yr
 
-    COORDINATE SYSTEM:
-    ---
-    `center_x` is an absolute pixel column in the frame AS RECEIVED - the
-    dataset's own resolution, 640x480. It is compared against a ground truth
-    measured in those pixels, so it only means anything in them.
+    divider_x = None
+    white_side = None
+    
+    if len(dash_pts) >= 1:
+        dash_pts.sort(key=lambda p: p[1])
+        left_dashes = [p for p in dash_pts if p[0] < vehicle_x]
+        right_dashes = [p for p in dash_pts if p[0] >= vehicle_x]
+        
+        candidates = []
+        for g, side in [(right_dashes, "right"), (left_dashes, "left"), (dash_pts, "all")]:
+            if len(g) >= 1:
+                g_ys = np.array([p[1] for p in g], dtype=np.float32)
+                g_xs = np.array([p[0] for p in g], dtype=np.float32)
+                if len(g) >= 2:
+                    fit = np.polyfit(g_ys, g_xs, 1)
+                    y_max = np.max(g_ys)
+                    y_ref = min(float(y_eval), float(y_max))
+                    x_at = fit[0] * y_ref + fit[1]
+                    res = np.abs(g_xs - (fit[0] * g_ys + fit[1]))
+                    err = float(np.mean(res))
+                else:
+                    x_at = float(g_xs[0])
+                    err = 0.0
+                if 0 <= x_at <= w:
+                    tot_area = float(np.sum([p[2] for p in g]))
+                    candidates.append((err, x_at, side, len(g), tot_area))
+                    
+        if candidates:
+            candidates.sort(key=lambda c: (-c[4], -c[3], c[0]))
+            err, x_at, side, count, tot_area = candidates[0]
+            divider_x = x_at
+            white_side = "right" if divider_x > vehicle_x else "left"
 
-    You may resize, crop or warp all you like inside this function, but scale
-    the answer back before returning it. A centre found in a 320x240 copy is
-    half the value it should be, and a centre read off a bird's-eye view is in
-    warped coordinates, not frame ones - map the point back through the inverse
-    of your transform. Do not re-encode or resize the clip files themselves.
+    half_lane = 120
+    
+    if divider_x is not None:
+        if _last_white_x is not None:
+            divider_x = 0.85 * divider_x + 0.15 * _last_white_x
+        _last_white_x = divider_x
+        _gap_count = 0
+        if white_side == "right":
+            lane = LANE_LEFT
+            center_x = divider_x - 122
+        else:
+            lane = LANE_RIGHT
+            center_x = divider_x + 101
+            if yellow_right_x is not None and yellow_right_x > divider_x + 50:
+                center_x = 0.50 * center_x + 0.50 * (yellow_right_x - 170)
+        _last_lane = lane
+    elif _last_white_x is not None and _gap_count < 12:
+        _gap_count += 1
+        divider_x = _last_white_x
+        lane = _last_lane
+        if lane == LANE_LEFT:
+            center_x = divider_x - 122
+        else:
+            center_x = divider_x + 101
+            if yellow_right_x is not None and yellow_right_x > divider_x + 50:
+                center_x = 0.50 * center_x + 0.50 * (yellow_right_x - 170)
+    else:
+        # Yellow fallback
+        if yellow_left_x is not None and yellow_right_x is not None:
+            road_mid = (yellow_left_x + yellow_right_x) / 2.0
+            lane = LANE_LEFT if vehicle_x < road_mid else LANE_RIGHT
+            center_x = (yellow_left_x + road_mid) / 2.0 if lane == LANE_LEFT else (road_mid + yellow_right_x) / 2.0
+        elif yellow_left_x is not None:
+            lane = LANE_LEFT
+            center_x = yellow_left_x + half_lane
+        elif yellow_right_x is not None:
+            lane = LANE_RIGHT
+            center_x = yellow_right_x - half_lane
+        else:
+            lane = _last_lane if _last_lane != LANE_UNKNOWN else LANE_UNKNOWN
+            center_x = _last_center_x if _last_center_x is not None else vehicle_x
 
-    NOTE:
-    ---
-    This function must ONLY compute and return the result.
-    Do not call cv2.imshow(), cv2.waitKey(), cv2.imwrite() or print() from
-    inside it. All visualisation and debugging output belongs outside this
-    function - see draw_overlay() and process_video() below.
-    '''
-
-    center_x = -1
-    lane = LANE_UNKNOWN
-
-    #################### ADD YOUR CODE HERE ####################
-    # 1. Isolate the lane markings in `frame`
-    # 2. Work out which two markings bracket the vehicle
-    # 3. Compute the x-pixel of the lane centre   ->  center_x
-    # 4. Decide which lane the vehicle is in      ->  lane
-    ############################################################
-
+    center_x = int(round(max(0, min(w - 1, center_x))))
+    if _last_center_x is not None and lane == _last_lane:
+        center_x = int(round(0.80 * center_x + 0.20 * _last_center_x))
+    _last_center_x = center_x
+    
     return {"center_x": center_x, "lane": lane}
-
-
-# ------------------------------------------------------------------
-# Add any helper functions and global variables you need below this
-# comment, and keep them ABOVE the "END OF YOUR IMPLEMENTATION" line.
-# They must be called from detect_lane() - the evaluation script only
-# ever calls that one function. List them in the file header too.
-# ------------------------------------------------------------------
-
 
 ##############################################################
 ################ END OF YOUR IMPLEMENTATION ##################
