@@ -62,7 +62,7 @@ def detect_lane(frame):
         return {"center_x": -1, "lane": LANE_UNKNOWN}
 
     vehicle_x = w / 2.0
-    y_eval = int(0.75 * h)
+    y_eval = int(0.74 * h)
     
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     
@@ -161,28 +161,38 @@ def detect_lane(frame):
     
     if divider_x is not None:
         if _last_white_x is not None:
-            divider_x = 0.85 * divider_x + 0.15 * _last_white_x
+            divider_x = 0.60 * divider_x + 0.40 * _last_white_x
         _last_white_x = divider_x
         _gap_count = 0
         if white_side == "right":
             lane = LANE_LEFT
-            center_x = divider_x - 122
+            center_x = divider_x - 125
+            if yellow_left_x is not None and yellow_left_x < divider_x - 50:
+                y_est = yellow_left_x + 172
+                center_x = 0.88 * center_x + 0.12 * y_est
         else:
             lane = LANE_RIGHT
-            center_x = divider_x + 101
+            center_x = divider_x + 99
             if yellow_right_x is not None and yellow_right_x > divider_x + 50:
-                center_x = 0.50 * center_x + 0.50 * (yellow_right_x - 170)
+                y_est = yellow_right_x - 168
+                weight = 0.80 if (yellow_right_x - divider_x) < 225 else 0.35
+                center_x = (1.0 - weight) * center_x + weight * y_est
         _last_lane = lane
     elif _last_white_x is not None and _gap_count < 12:
         _gap_count += 1
         divider_x = _last_white_x
         lane = _last_lane
         if lane == LANE_LEFT:
-            center_x = divider_x - 122
+            center_x = divider_x - 125
+            if yellow_left_x is not None and yellow_left_x < divider_x - 50:
+                y_est = yellow_left_x + 172
+                center_x = 0.88 * center_x + 0.12 * y_est
         else:
-            center_x = divider_x + 101
+            center_x = divider_x + 99
             if yellow_right_x is not None and yellow_right_x > divider_x + 50:
-                center_x = 0.50 * center_x + 0.50 * (yellow_right_x - 170)
+                y_est = yellow_right_x - 168
+                weight = 0.80 if (yellow_right_x - divider_x) < 225 else 0.35
+                center_x = (1.0 - weight) * center_x + weight * y_est
     else:
         # Yellow fallback
         if yellow_left_x is not None and yellow_right_x is not None:
@@ -201,7 +211,7 @@ def detect_lane(frame):
 
     center_x = int(round(max(0, min(w - 1, center_x))))
     if _last_center_x is not None and lane == _last_lane:
-        center_x = int(round(0.80 * center_x + 0.20 * _last_center_x))
+        center_x = int(round(0.55 * center_x + 0.45 * _last_center_x))
     _last_center_x = center_x
     
     return {"center_x": center_x, "lane": lane}

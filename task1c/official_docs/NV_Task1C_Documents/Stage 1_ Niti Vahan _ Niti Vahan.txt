@@ -1,0 +1,71 @@
+Stage 1: Niti Vahan | Niti Vahan
+
+1 of 3
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/i...
+
+Stage 1
+
+Welcome, explorers, to
+, one of the thrilling themes of eYRC
+2026�27! This year you build an autonomous vehicle that treats the rules of
+the road not as an obstacle, but as its own logic.
+
+Picture a city arena where an Ackermann-steered vehicle has to earn its way through
+traffic reading lanes, holding at junctions, signalling its turns, and never crowding a
+neighbourʼs space. Beyond just following rules, the Vahan is defined by its deep civic
+sense: because it constantly predicts its own future path, it never makes the sudden,
+selfish moves that cause others to panic.
+
+The core task is pick-up and drop-off: collecting a passenger and threading it
+through the arena while obeying every traffic rule along the way. Stage 1 is about
+proving this capability in simulation.
+
+Your mission is to bring this disciplined driver to life in simulation first, then on real
+hardware:
+• Encode the traffic rulebook as mathematical constraints that a predictive control
+
+10/5/26, 4:15 PM
+
+Stage 1: Niti Vahan | Niti Vahan
+
+2 of 3
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/i...
+
+system can plan against.
+• Generate a disciplined path that stops at junctions, signals turns, and completes
+milestones with minimal rule violations.
+• Maintain dynamic stability while respecting the vehicleʼs physical limits when
+navigating between locations.
+• Execute precise parking within a designated zone to complete the route.
+Itʼs about proving that smart control logic can produce safer, more orderly movement
+through the city.
+
+Camera-based lane detection, junction and traffic-signal recognition
+Predictive path planning under traffic-rule constraints, Ackermann-steering
+dynamics, stable path tracking
+A layer that governs when to proceed, hold, or divert toward the parking zone
+
+Build and validate lane detection, lane switching via obstacle avoidance, sign
+detection, and traffic-rule compliance.
+
+Realize the same pick-up and drop-off task on a physical platform.
+
+10/5/26, 4:15 PM
+
+Stage 1: Niti Vahan | Niti Vahan
+
+3 of 3
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/i...
+
+A robot that can navigate the arena by following lanes, avoiding collision, and parking
+in the designated area.
+This is your starting point. Everything you build across both stages - the lane
+keeping, the junction discipline, the parking - traces back to the mission laid out
+here.
+
+10/5/26, 4:15 PM
+
+

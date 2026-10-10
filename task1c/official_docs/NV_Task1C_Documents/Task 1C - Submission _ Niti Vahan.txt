@@ -1,0 +1,330 @@
+Task 1C - Submission | Niti Vahan
+
+1 of 7
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+Task 1C
+
+Every submitted file is checked with plagiarism-detection software. A
+plagiarised submission may lead to disqualification of the team.
+
+Task 1C carries
+. Grading happens in two places, and only the second one
+counts towards your score:
+
+, with the
+evaluation tool
+, after you
+submit
+
+the
+
+clips you were
+
+given
+a
+
+Your own feedback, and the result
+file you upload
+
+set of clips you
+
+Your actual marks
+
+have never seen
+
+Both use the same scoring rules, so your local number is a genuine estimate - but a
+detector tuned to the public clips will not carry over, and that gap is the whole reason
+the private set exists.
+
+Lane identification
+
+Fraction of frames where
+
+matches the ground truth
+
+10/5/26, 4:14 PM
+
+Task 1C - Submission | Niti Vahan
+
+2 of 7
+
+Lane centre
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+How close
+
+is to the true lane centre
+
+A lane is roughly 315 px wide in the frame, so your
+does not have to be exact:
+
+within
+
+full
+
+within
+
+half
+
+beyond 60 px
+
+none
+
+the
+
+for that frame was
+
+none
+
+That last row matters: the centre of the wrong lane is not the centre of your lane,
+however close the number looks. Get the lane right first.
+Returning
+/
+on a frame where the
+lane was clearly visible scores zero on both components, the same as a wrong
+answer. Reporting failure honestly costs you nothing extra and makes your own
+debugging far easier
+
+Run everything
+3.10, NumPy and OpenCV.
+
+- the one holding Python
+
+conda activate NV_<Team-ID>
+pip3 install -U eyantra-autoeval
+
+10/5/26, 4:14 PM
+
+Task 1C - Submission | Niti Vahan
+
+3 of 7
+
+Run it from
+clips beside it in
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+, the folder holding your completed
+:
+
+with the
+
+task1c∕
+├── lane_detection.py
+└── public∕
+├── clip_01.mp4
+└── …
+
+column is the ambiguous frames - mid lane-change, or the divider out
+The
+of view - which are excluded for everyone and cost you nothing.
+
+eyantra-autoeval evaluate --year 2026 --theme NV --task 1c
+
+and the dataset, checks every clip is 640 �
+The tool finds your
+480, then calls your
+on every frame and compares the output
+against the ground truth. It prints a per-clip breakdown and your public-set score:
+-----------------------------------------------------------------------------clip
+
+scored
+
+skipped
+
+lane ok
+
+centre ok
+
+mean err
+
+-----------------------------------------------------------------------------clip_01.mp4
+
+200
+
+0
+
+200
+
+200.0
+
+0.2px
+
+...
+-----------------------------------------------------------------------------TOTAL
+
+3708
+
+292
+
+3547
+
+3223.0
+
+11.8px
+
+-----------------------------------------------------------------------------Lane identification :
+
+95.7%
+
+( 90.2% after the 55.5% chance floor)
+
+86.9%
+
+-> 26.08 ∕ 30
+
+-> 18.05 ∕
+
+20
+Lane centre
+
+:
+
+PUBLIC-SET TOTAL
+
+: 44.13 ∕ 50
+
+If it cannot find your script or the clips it will ask for the path. It writes a result file
+such as
+into the directory you ran it from.
+
+10/5/26, 4:14 PM
+
+Task 1C - Submission | Niti Vahan
+
+4 of 7
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+The tool imports your
+directly. If you renamed the file or the
+function, changed the keys of the returned dictionary, or left a
+/
+inside
+, the run will fail or hang and no result
+file is written.
+
+Put
+
+into a single zip:
+
+the result file from step 2, renamed
+your completed script
+
+Rename
+with your script and name the zip
+
+to
+
+, then zip it together
+.
+
+mv result-2026-NV-1C-*.json NV_Task1C.json
+zip NV_Task1C.zip NV_Task1C.json lane_detection.py
+
+- rename the result file in Explorer, select both files, right-click and choose
+, then rename the archive to
+.
+It does not matter if Windows puts the two files inside a folder within the zip; the
+grader looks for them either way.
+Upload the zip on the
+
+The zip must be named exactly
+still be named
+
+.
+
+, and your script inside it must
+.
+
+10/5/26, 4:14 PM
+
+Task 1C - Submission | Niti Vahan
+
+5 of 7
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+After grading, the portal shows a remark. Here is what each one means.
+
+Your score
+on the
+private
+clips, per
+component
+How many
+frames
+counted.
+Ambiguous
+frames are
+excluded
+for
+everyone
+Your
+detector
+gave up on
+frames it
+should
+have
+handled;
+each
+scored
+zero
+
+10/5/26, 4:14 PM
+
+Task 1C - Submission | Niti Vahan
+
+6 of 7
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+Your local
+score next
+to your real
+one. A
+large gap
+means
+overfitting
+to the
+public clips
+The result
+JSON was
+missing,
+renamed
+wrongly, or
+edited
+The script
+was
+missing or
+renamed
+The grader
+has no
+display,
+and the
+rules
+forbid it
+A graderside note
+about
+chance
+correction
+Your code
+raised, or
+the zip
+was
+malformed
+
+10/5/26, 4:14 PM
+
+Task 1C - Submission | Niti Vahan
+
+7 of 7
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+10/5/26, 4:14 PM
+
+

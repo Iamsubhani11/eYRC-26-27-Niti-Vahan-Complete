@@ -1,0 +1,258 @@
+Task 1C - Instructions | Niti Vahan
+
+1 of 6
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+Task 1C
+
+It covers what
+you need for this task.
+
+Fill in the
+function of the Task 1C boilerplate so that, for every
+frame of the given videos, it reports
+and
+.
+
+Both files come from the
+
+- see
+
+on the
+
+overview page.
+
+the boilerplate you fill in
+the 20 video clips, already in the repository
+
+You do not download or unzip anything: cloning the repository gives you the clips.
+The folder looks like this, and the evaluation tool finds them on its own:
+
+10/5/26, 4:14 PM
+
+Task 1C - Instructions | Niti Vahan
+
+2 of 6
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+task1c∕
+├── lane_detection.py
+
+<- the boilerplate, with your detect_lane()
+
+└── public∕
+├── clip_01.mp4
+
+<- 20 clips, 640 x 480, 20 fps, 200 frames each
+
+├── clip_02.mp4
+└── …
+
+Then work inside your
+
+environment from Task 0�
+
+conda activate NV_<Team-ID>
+python lane_detection.py public∕clip_01.mp4 --show
+
+These clips are for developing on your own machine. Your submission is
+
+run
+against a private set of clips you never see, so a detector tuned to these particular
+frames will not carry over. How the marks are split, and how close your
+has to be, are on the
+page - worth reading before you start optimising.
+
+is the only function you write. It receives one frame and returns one
+dictionary:
+def detect_lane(frame):
+...
+return {"center_x": center_x, "lane": lane}
+
+x-pixel of the lane centre in this frame, or
+,
+
+if the lane could not be found
+
+or
+
+The dashed white line divides the two lanes, so the side of it
+that the vehicle is on decides the answer:
+
+10/5/26, 4:14 PM
+
+Task 1C - Instructions | Niti Vahan
+
+3 of 6
+
+to the
+to the
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+of the vehicle
+of the vehicle
+
+not identifiable in this frame
+
+Return
+and
+honestly when a frame defeats your detector. A wrong
+answer and a missing answer score the same, and a detector that reports failure is
+far easier to debug than one that guesses.
+
+, and
+is an absolute pixel column in the frame
+. The evaluator compares it against a ground truth measured in those
+same pixels, so the number only means anything in them.
+The clips are
+
+Inside
+you may resize, crop or warp as much as you like - but
+convert the answer back before you return it.
+• Found the centre in a
+
+copy? It is half the value it should be.
+
+Scale it back up.
+? That is a warped coordinate, not a frame
+• Read it off a
+one. Map the point back through the inverse of your perspective
+transform (
+with the inverse matrix).
+re-encode, resize or re-compress the clip files themselves. The
+• Do
+evaluator checks every clip is 640 � 480 and refuses to grade a dataset
+that is not, because every correct answer would be shifted sideways.
+Keeping one fixed resolution is what makes the same tolerance fair for everyone,
+whatever method you chose.
+
+You are not expected to fit everything into one function. Add as many helper
+
+10/5/26, 4:14 PM
+
+Task 1C - Instructions | Niti Vahan
+
+4 of 6
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+functions and global variables as you like - put them
+, and call them from
+
+:
+
+def detect_lane(frame):
+...
+yellow_x, white_x = marking_positions(frame)
+
+# your helper,
+
+defined below
+...
+return {"center_x": center_x, "lane": lane}
+
+# ---- helpers, still inside the implementation block ---def marking_positions(frame):
+...
+return yellow_x, white_x
+
+Defining a helper after
+
+is fine - Python resolves the name when the
+call actually happens, not when the file is read. What matters is that the helper sits
+inside the implementation block and that
+reaches it: the evaluation
+script only ever calls that one function, so anything it does not reach is dead code.
+List any helpers and globals you add in the file header at the top of the script.
+
+10/5/26, 4:14 PM
+
+Task 1C - Instructions | Niti Vahan
+
+5 of 6
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+• Write your code
+inside the block marked
+. Everything outside it ,
+,
+,
+- must stay exactly as shipped, because the
+evaluation script depends on it.
+•
+
+No
+,
+,
+or
+. The function computes and
+returns, nothing else. All visualisation belongs in
+, which
+already calls for you when you pass
+.
+
+• Do not rename the file, the function, or the keys of the returned
+dictionary.
+• Helper functions and global variables are welcome, but they must live
+.
+inside the marked block and be reachable from
+
+# every clip in the folder, with the overlay window - press q to stop
+python lane_detection.py public --show
+# write the per-frame results out so you can inspect them
+python lane_detection.py public --out results.json
+
+Each clip prints a one-line summary of how many frames came back
+, and how many had no centre at all:
+clip_01.mp4
+unknown
+
+200 frames | left
+0 | no centre
+
+200 | right
+
+,
+
+,
+
+0 |
+
+0
+
+If
+
+returns something of the wrong shape,
+the run and names the frame and the problem:
+
+stops
+
+ValueError: detect_lane() on frame 12 returned lane = 'LEFTish',
+expected one of left, right, unknown
+
+10/5/26, 4:14 PM
+
+Task 1C - Instructions | Niti Vahan
+
+6 of 6
+
+• Check the
+
+https://portal.e-yantra.org/courses/theme_nv/stage_1/...
+
+overlay through a
+
+, not only on the straights.
+
+• Confirm the lane label stays stable when the dashed line is passing through a
+gap.
+• Comment out or remove any debugging you added inside
+
+.
+
+10/5/26, 4:14 PM
+
+
